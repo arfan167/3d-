@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberVerse 3D Showcase Hub - Red & White Edition</title>
+  
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google <model-viewer> Library -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #0b0707;
+      --card-bg: rgba(26, 15, 15, 0.75);
+      --card-border: rgba(239, 68, 68, 0.3);
+      --primary: #ef4444; /* Merah Utama */
+      --primary-glow: rgba(239, 68, 68, 0.5);
+      --accent: #ffffff; /* Putih Accent */
+      --accent-glow: rgba(255, 255, 255, 0.3);
+      --text-main: #ffffff;
+      --text-sub: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* CANVAS ANIMASI CURSOR BACKGROUND */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* INITIAL LOADING SCREEN (10s) DENGAN LOGO GAMBAR KOLABORASI */
+    #initial-loader {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background-color: #070404;
+      background-image: radial-gradient(circle at center, rgba(239, 68, 68, 0.25) 0%, #070404 70%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+
+    #initial-loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* SECTION LOGO GAMBAR KOLABORASI */
+    .collab-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    .collab-logo-box {
+      width: 85px;
+      height: 85px;
+      background: rgba(26, 15, 15, 0.8);
+      border: 2px solid var(--primary);
+      border-radius: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 0 25px var(--primary-glow);
+      animation: logoPulse 2s infinite ease-in-out;
+      overflow: hidden;
+      padding: 8px;
+    }
+
+    .collab-logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .collab-cross {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    @keyframes logoPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 15px var(--primary-glow); }
+      50% { transform: scale(1.08); box-shadow: 0 0 30px var(--primary-glow); }
+    }
+
+    .loader-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+      color: #ffffff;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .loader-title span {
+      color: var(--primary);
+    }
+
+    .progress-bar-container {
+      width: 80%;
+      max-width: 450px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #991b1b, #ef4444, #ffffff);
+      border-radius: 20px;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .progress-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      margin-top: 15px;
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .loader-status {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      margin-top: 6px;
+    }
+
+    /* WELCOME POPUP MODAL */
+    #welcome-modal {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 9998;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      padding: 20px;
+    }
+
+    #welcome-modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-card {
+      background: rgba(26, 15, 15, 0.95);
+      border: 2px solid var(--primary);
+      border-radius: 20px;
+      padding: 30px 25px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 35px var(--primary-glow);
+      transform: scale(0.8);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #welcome-modal.active .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-icon {
+      font-size: 3rem;
+      color: var(--primary);
+      margin-bottom: 15px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .modal-card h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: #ffffff;
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .modal-card p {
+      color: var(--text-sub);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 25px;
+    }
+
+    .modal-btn {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: #ffffff;
+      border: 1px solid #ffffff;
+      padding: 12px 30px;
+      border-radius: 30px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    .modal-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.8);
+      background: #ef4444;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      background: linear-gradient(135deg, #ffffff 0%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      text-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    }
+
+    header p {
+      color: var(--text-sub);
+      font-size: 0.95rem;
+    }
+
+    /* App Container */
+    .app-container {
+      width: 100%;
+      max-width: 1050px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Horizontal Category Scroll Bar (5 Kategori) */
+    .category-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 8px 4px 14px 4px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary) transparent;
+      justify-content: center;
+    }
+
+    .category-scroll::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .category-scroll::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 4px;
+    }
+
+    .cat-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-sub);
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cat-btn i {
+      font-size: 0.95rem;
+      color: var(--primary);
+    }
+
+    .cat-btn:hover {
+      border-color: #ffffff;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    .cat-btn.active {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      border-color: #ffffff;
+      color: #ffffff;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .cat-btn.active i {
+      color: #ffffff;
+    }
+
+    /* Controls Bar */
+    .controls-bar {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      padding: 14px 20px;
+      border-radius: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .select-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .select-wrapper label {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    .select-wrapper label i {
+      color: var(--primary);
+    }
+
+    select {
+      flex: 1;
+      background: rgba(15, 7, 7, 0.9);
+      color: #ffffff;
+      border: 1px solid var(--card-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    select:focus {
+      border-color: #ffffff;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      background: rgba(15, 7, 7, 0.7);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn i {
+      color: var(--primary);
+    }
+
+    .action-btn:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: #ffffff;
+    }
+
+    .action-btn:hover i {
+      color: #ffffff;
+    }
+
+    /* 3D Canvas Container */
+    .canvas-card {
+      position: relative;
+      width: 100%;
+      height: 62vh;
+      min-height: 420px;
+      background: radial-gradient(circle at center, rgba(45, 15, 15, 0.6) 0%, rgba(15, 7, 7, 0.95) 100%);
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      --poster-color: transparent;
+    }
+
+    /* BUTANG PANAH NAVIGASI OVERLAY */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 50px;
+      height: 50px;
+      background: rgba(15, 7, 7, 0.7);
+      border: 1px solid var(--card-border);
+      color: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+
+    .nav-arrow:hover {
+      background: var(--primary);
+      border-color: #ffffff;
+      box-shadow: 0 0 20px var(--primary-glow);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .nav-arrow.left { left: 15px; }
+    .nav-arrow.right { right: 15px; }
+
+    /* Spinner Loading */
+    .loading-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(11, 7, 7, 0.85);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(4px);
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 5;
+    }
+
+    .loading-overlay.active { opacity: 1; }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(239, 68, 68, 0.2);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Info Badge Overlay */
+    .model-badge {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(15, 7, 7, 0.85);
+      border: 1px solid var(--card-border);
+      padding: 12px 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      max-width: 80%;
+      pointer-events: none;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      z-index: 4;
+    }
+
+    .model-badge h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      color: #ffffff;
+      margin-bottom: 2px;
+      border-left: 3px solid var(--primary);
+      padding-left: 8px;
+    }
+
+    .model-badge p {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CANVAS ANIMASI CURSOR BACKGROUND -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- INITIAL LOADING SCREEN DENGAN LOGO GAMBAR SEKOLAH X LOGO TEAM -->
+  <div id="initial-loader">
+    
+    <!-- BAHAGIAN GAMBAR LOGO KOLABORASI -->
+    <div class="collab-container">
+      <!-- 1. GAMBAR LOGO SEKOLAH -->
+      <div class="collab-logo-box">
+        <img src="logo_sekolah.png" alt="Logo Sekolah" onerror="this.src='https://via.placeholder.com/100?text=Sekolah'">
+      </div>
+
+      <!-- TANDA X -->
+      <div class="collab-cross">✕</div>
+
+      <!-- 2. GAMBAR LOGO TEAM -->
+      <div class="collab-logo-box">
+        <img src="logo_team.png" alt="Logo Team" onerror="this.src='https://via.placeholder.com/100?text=Team'">
+      </div>
+    </div>
+
+    <div class="loader-title">CYBERVERSE <span>3D</span></div>
+    
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progress-bar"></div>
+    </div>
+    <div class="progress-text" id="progress-counter">0%</div>
+    <div class="loader-status">Memuatkan aset 3D & komponen...</div>
+  </div>
+
+  <!-- WELCOME POPUP MODAL -->
+  <div id="welcome-modal">
+    <div class="modal-card">
+      <div class="modal-icon"><i class="fa-solid fa-cube"></i></div>
+      <h2>Selamat Datang!</h2>
+      <p>Selamat datang ke <b>CyberVerse 3D Showcase Hub</b>. Terokai pelbagai koleksi model 3D interaktif secara 360 darjah.</p>
+      <button class="modal-btn" onclick="closeWelcomeModal()">MULA TEROKAI</button>
+    </div>
+  </div>
+
+  <!-- MAIN WEBSITE CONTENT -->
+  <header>
+    <h1>CyberVerse 3D Hub</h1>
+    <p>Koleksi Model 3D Interaktif • Tema Merah Putih</p>
+  </header>
+
+  <div class="app-container">
+    
+    <!-- Horizontal Category Scroll Bar (5 Kategori) -->
+    <div class="category-scroll">
+      <button class="cat-btn active" onclick="selectCategory('f1')">
+        <i class="fa-solid fa-flag-checkered"></i> F1 Racing
+      </button>
+      <button class="cat-btn" onclick="selectCategory('dji')">
+        <i class="fa-solid fa-drone"></i> DJI Drones
+      </button>
+      <button class="cat-btn" onclick="selectCategory('onepiece')">
+        <i class="fa-solid fa-anchor"></i> One Piece
+      </button>
+      <button class="cat-btn" onclick="selectCategory('zzz')">
+        <i class="fa-solid fa-bolt"></i> Zenless Zone Zero
+      </button>
+      <button class="cat-btn" onclick="selectCategory('gundam')">
+        <i class="fa-solid fa-shield-halved"></i> Gundam
+      </button>
+    </div>
+
+    <!-- Controls Toolbar -->
+    <div class="controls-bar">
+      <div class="select-wrapper">
+        <label for="model-select"><i class="fa-solid fa-cube"></i> Model:</label>
+        <select id="model-select" onchange="loadSelectedModel()">
+          <!-- Dropdown diisi dari JavaScript -->
+        </select>
+      </div>
+
+      <div class="action-buttons">
+        <button class="action-btn" onclick="toggleAutoRotate()" id="rotate-btn">
+          <i class="fa-solid fa-rotate"></i> Auto Rotate
+        </button>
+        <button class="action-btn" onclick="resetCamera()">
+          <i class="fa-solid fa-arrows-to-dot"></i> Reset
+        </button>
+        <button class="action-btn" onclick="toggleFullscreen()">
+          <i class="fa-solid fa-expand"></i> Fullscreen
+        </button>
+      </div>
+    </div>
+
+    <!-- Main 3D Canvas Box -->
+    <div class="canvas-card" id="canvas-card">
+      
+      <!-- BUTANG ARROW NAVIGASI -->
+      <button class="nav-arrow left" onclick="prevModel()" title="Model Sebelumnya">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button class="nav-arrow right" onclick="nextModel()" title="Model Seterusnya">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+
+      <model-viewer 
+        id="main-viewer"
+        src="" 
+        alt="Model 3D Interaktif" 
+        auto-rotate 
+        camera-controls 
+        shadow-intensity="1.5"
+        ar
+        ar-modes="webxr scene-viewer quick-look">
+      </model-viewer>
+
+      <!-- Spinner Loading -->
+      <div class="loading-overlay" id="loading-spinner">
+        <div class="spinner"></div>
+        <span style="font-size: 0.85rem; color: #ffffff;">Memuatkan Model 3D...</span>
+      </div>
+
+      <!-- Info Badge Overlay -->
+      <div class="model-badge">
+        <h2 id="model-title">Model Name</h2>
+        <p>Guna butang panah / tetikus untuk alih & pusingkan model.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. ANIMASI CURSOR BACKGROUND CANVAS (PARTICLES)
+    // ==========================================
+    const bgCanvas = document.getElementById('bg-canvas');
+    const ctx = bgCanvas.getContext('2d');
+
+    let particles = [];
+    const particleCount = 45;
+    const mouse = { x: null, y: null, radius: 140 };
+
+    function resizeCanvas() {
+      bgCanvas.width = window.innerWidth;
+      bgCanvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.x;
+      mouse.y = e.y;
+    });
+
+    window.addEventListener('mouseleave', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * bgCanvas.width;
+        this.y = Math.random() * bgCanvas.height;
+        this.radius = Math.random() * 2 + 1;
+        this.vx = (Math.random() - 0.5) * 0.8;
+        this.vy = (Math.random() - 0.5) * 0.8;
+        this.color = Math.random() > 0.4 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(255, 255, 255, 0.4)';
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+
+        if (mouse.x !== null && mouse.y !== null) {
+          const dx = mouse.x - this.x;
+          const dy = mouse.y - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < mouse.radius) {
+            const forceDirectionX = dx / distance;
+            const forceDirectionY = dy / distance;
+            const force = (mouse.radius - distance) / mouse.radius;
+
+            this.x -= forceDirectionX * force * 2.5;
+            this.y -= forceDirectionY * force * 2.5;
+          }
+        }
+
+        this.draw();
+      }
+    }
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    }
+    initParticles();
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+
+        if (mouse.x !== null && mouse.y !== null) {
+          const dx = mouse.x - particles[i].x;
+          const dy = mouse.y - particles[i].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < mouse.radius) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.strokeStyle = `rgba(239, 68, 68, ${0.4 * (1 - dist / mouse.radius)})`;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // ==========================================
+    // 2. DATABASE MODEL 3D (5 Kategori Sahaja)
+    // ==========================================
+    const database = {
+      f1: [
+        { name: 'Vigeon Velocity F1', file: 'models/f1_vigeon_velocity.glb' },
+        { name: 'Mercedes F1', file: 'models/f1_mercedes.glb' },
+        { name: 'Red Bull F1', file: 'models/f1_redbull.glb' },
+        { name: 'Audi F1', file: 'models/f1_audi.glb' },
+        { name: 'Ferrari F1', file: 'models/f1_ferrari.glb' },
+        { name: 'Renault F1', file: 'models/f1_renault.glb' }
+      ],
+      dji: [
+        { name: 'DJI Neo 2', file: 'models/dji_neo_2.glb' },
+        { name: 'DJI Avata 2', file: 'models/dji_avata_2.glb' },
+        { name: 'DJI Mini 3', file: 'models/dji_mini_3.glb' },
+        { name: 'DJI Tello', file: 'models/dji_tello.glb' },
+        { name: 'DJI Spark', file: 'models/dji_spark.glb' },
+        { name: 'DJI Inspire 2', file: 'models/dji_inspire_2.glb' },
+        { name: 'DJI Mavic 3', file: 'models/dji_mavic_3.glb' },
+        { name: 'DJI FPV', file: 'models/dji_fpv_1.glb' }
+      ],
+      onepiece: [
+        { name: 'Luffy', file: 'models/op_luffy_1.glb' },
+        { name: 'Nami', file: 'models/op_nami.glb' },
+        { name: 'Nico Robin (Model 1)', file: 'models/op_nico_robin_1.glb' },
+        { name: 'Nico Robin (Model 2)', file: 'models/op_nico_robin_2.glb' },
+        { name: 'Uta', file: 'models/op_uta.glb' },
+        { name: 'Roronoa Zoro', file: 'models/op_zoro.glb' },
+        { name: 'Sanji', file: 'models/op_sanji.glb' },
+        { name: 'Portgas D. Ace', file: 'models/op_ace.glb' },
+        { name: 'Tony Tony Chopper', file: 'models/op_chopper.glb' },
+        { name: 'Going Merry', file: 'models/op_going_merry.glb' }
+      ],
+      zzz: [
+        { name: 'Ellen Joe', file: 'models/zzz_ellen_joe.glb' },
+        { name: 'Zhu Yuan', file: 'models/zzz_zhu_yuan.glb' },
+        { name: 'Nicole Demara', file: 'models/zzz_nicole.glb' },
+        { name: 'Grace Howard', file: 'models/zzz_grace_howard.glb' },
+        { name: 'Burnice White', file: 'models/zzz_burnice_white.glb' },
+        { name: 'Anby Demara', file: 'models/zzz_anby_demara.glb' }
+      ],
+      gundam: [
+        { name: 'RX-78-2 Gundam', file: 'models/gundam_rx782.glb' },
+        { name: 'Gundam Aerial', file: 'models/gundam_aerial.glb' },
+        { name: 'Gundam Exia', file: 'models/gundam_exia.glb' },
+        { name: 'Gundam Barbatos', file: 'models/gundam_barbatos.glb' },
+        { name: 'Gundam Astray Red Frame Kai', file: 'models/gundam_red_frame_kai.glb' },
+        { name: 'Strike Freedom Gundam', file: 'models/gundam_strike_freedom.glb' },
+        { name: 'Unicorn Gundam', file: 'models/gundam_unicorn.glb' }
+      ]
+    };
+
+    let currentCategory = 'f1';
+    const viewer = document.getElementById('main-viewer');
+    const spinner = document.getElementById('loading-spinner');
+
+    // LOGIK LOADING SCREEN 10 SAAT
+    function start10sLoadingScreen() {
+      const progressBar = document.getElementById('progress-bar');
+      const progressCounter = document.getElementById('progress-counter');
+      const loaderScreen = document.getElementById('initial-loader');
+      const welcomeModal = document.getElementById('welcome-modal');
+
+      let currentPercent = 0;
+      const totalTimeMs = 10000;
+      const intervalMs = 100;
+      const increment = 100 / (totalTimeMs / intervalMs);
+
+      const timer = setInterval(() => {
+        currentPercent += increment;
+
+        if (currentPercent >= 100) {
+          currentPercent = 100;
+          clearInterval(timer);
+
+          setTimeout(() => {
+            loaderScreen.classList.add('hidden');
+            welcomeModal.classList.add('active');
+          }, 400);
+        }
+
+        progressBar.style.width = currentPercent + '%';
+        progressCounter.innerText = Math.floor(currentPercent) + '%';
+      }, intervalMs);
+    }
+
+    function closeWelcomeModal() {
+      document.getElementById('welcome-modal').classList.remove('active');
+    }
+
+    function selectCategory(catKey) {
+      currentCategory = catKey;
+      
+      const buttons = document.querySelectorAll('.cat-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      populateDropdown();
+    }
+
+    function populateDropdown() {
+      const selectEl = document.getElementById('model-select');
+      selectEl.innerHTML = '';
+
+      const items = database[currentCategory];
+      items.forEach((item) => {
+        const option = document.createElement('option');
+        option.value = item.file;
+        option.textContent = item.name;
+        selectEl.appendChild(option);
+      });
+
+      loadSelectedModel();
+    }
+
+    function loadSelectedModel() {
+      const selectEl = document.getElementById('model-select');
+      const titleEl = document.getElementById('model-title');
+
+      if (selectEl.options.length > 0) {
+        const selectedFile = selectEl.value;
+        const selectedName = selectEl.options[selectEl.selectedIndex].text;
+
+        spinner.classList.add('active');
+        viewer.src = selectedFile;
+        titleEl.innerText = selectedName;
+      }
+    }
+
+    function prevModel() {
+      const selectEl = document.getElementById('model-select');
+      if (selectEl.selectedIndex > 0) {
+        selectEl.selectedIndex--;
+      } else {
+        selectEl.selectedIndex = selectEl.options.length - 1;
+      }
+      loadSelectedModel();
+    }
+
+    function nextModel() {
+      const selectEl = document.getElementById('model-select');
+      if (selectEl.selectedIndex < selectEl.options.length - 1) {
+        selectEl.selectedIndex++;
+      } else {
+        selectEl.selectedIndex = 0;
+      }
+      loadSelectedModel();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        prevModel();
+      } else if (e.key === 'ArrowRight') {
+        nextModel();
+      }
+    });
+
+    viewer.addEventListener('load', () => {
+      spinner.classList.remove('active');
+    });
+
+    function toggleAutoRotate() {
+      viewer.autoRotate = !viewer.autoRotate;
+      const btn = document.getElementById('rotate-btn');
+      if (viewer.autoRotate) {
+        btn.style.borderColor = '#ffffff';
+        btn.style.color = '#ffffff';
+        btn.style.background = 'var(--primary)';
+      } else {
+        btn.style.borderColor = 'var(--card-border)';
+        btn.style.color = 'var(--text-main)';
+        btn.style.background = 'rgba(15, 7, 7, 0.7)';
+      }
+    }
+
+    function resetCamera() {
+      viewer.cameraOrbit = '0deg 75deg 105%';
+    }
+
+    function toggleFullscreen() {
+      const card = document.getElementById('canvas-card');
+      if (!document.fullscreenElement) {
+        card.requestFullscreen().catch(err => alert(`Gagal masuk mod skrin penuh: ${err.message}`));
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    window.onload = () => {
+      start10sLoadingScreen();
+      populateDropdown();
+    };
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "name": "cyberverse3d",
+  "version": "1.0.0",
+  "description": "CyberVerse 3D Showcase Hub",
+  "main": "main.js",
+  "author": "Arfan",
+  "license": "ISC"
+}
